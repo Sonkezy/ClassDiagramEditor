@@ -1,0 +1,36 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+        </Border>
+    </Design.PreviewWith>
+    <!-- Add Styles Here -->
+	<Style Selector="GridSplitter">
+		<Setter Property="VerticalAlignment" Value="Bottom"/>
+		<Setter Property="MinHeight" Value="0"/>
+		<Setter Property="Height" Value="1"/>
+		<Setter Property="Background" Value="Black"/>
+	</Style>
+	<Style Selector="TextBlock.name">
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+	</Style>
+	<Style Selector="TextBlock.type">
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+		<Setter Property="FontStyle" Value="Italic"/>
+	</Style>
+	<Style Selector="TextBlock.attribute">
+		<Setter Property="HorizontalAlignment" Value="Left"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+	</Style>
+	<Style Selector="TextBlock.method">
+		<Setter Property="HorizontalAlignment" Value="Left"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+		<Setter Property="FontStyle" Value="Italic"/>
+	</Style>
+	<Style Selector="GridSplitter">
+		<Setter Property="VerticalAlignment" Value="Bottom"/>
+	</Style>
+</Styles>

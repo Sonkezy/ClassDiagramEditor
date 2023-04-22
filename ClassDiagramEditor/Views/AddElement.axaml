@@ -1,0 +1,168 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:converter="clr-namespace:ClassDiagramEditor.Models"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
+		Width="500" Height="500"
+        x:Class="ClassDiagramEditor.Views.AddElement"
+        Title="AddElement">
+	<Window.Styles>
+		<StyleInclude Source="/Assets/AddElementStyles.axaml"/>
+	</Window.Styles>
+	<Window.Resources>
+		<converter:TypeConverter x:Key="typeConverter"/>
+	</Window.Resources>
+
+	<Grid RowDefinitions="*,auto" ColumnDefinitions="*,*,*" Classes="main">
+
+		<TabControl Grid.ColumnSpan="3">
+			<TabItem Header="Общие параметры">
+				<Grid ColumnDefinitions="*,2*" RowDefinitions="auto,auto,auto" Margin="8">
+					<TextBlock>Название: </TextBlock>
+					<TextBox Grid.Column="1" Text="{Binding Name}" Margin="0 0 0 10">May be...</TextBox>
+
+					<TextBlock Grid.Row="1">Стереотипы: </TextBlock>
+					<Border Grid.Row="1" Grid.Column="1" Classes="b">
+						<StackPanel>
+							<RadioButton IsChecked="{Binding Stereo, Converter={StaticResource typeConverter}, ConverterParameter=0}">
+								none</RadioButton>
+							<RadioButton IsChecked="{Binding Stereo, Converter={StaticResource typeConverter}, ConverterParameter=1}">
+								«static»</RadioButton>
+							<RadioButton IsChecked="{Binding Stereo, Converter={StaticResource typeConverter}, ConverterParameter=2}">
+								«abstract»</RadioButton>
+							<RadioButton IsChecked="{Binding Stereo, Converter={StaticResource typeConverter}, ConverterParameter=3}">
+								«interface»</RadioButton>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Grid.Row="2">Видимость: </TextBlock>
+					<Border Grid.Row="2" Grid.Column="1" Classes="b">
+						<StackPanel>
+							<RadioButton IsChecked="{Binding Access, Converter={StaticResource typeConverter}, ConverterParameter=0}">
+								none</RadioButton>
+							<RadioButton IsChecked="{Binding Access, Converter={StaticResource typeConverter}, ConverterParameter=1}">
+								private</RadioButton>
+							<RadioButton IsChecked="{Binding Access, Converter={StaticResource typeConverter}, ConverterParameter=2}">
+								public</RadioButton>
+							<RadioButton IsChecked="{Binding Access, Converter={StaticResource typeConverter}, ConverterParameter=3}">
+								protected</RadioButton>
+							<RadioButton IsChecked="{Binding Access, Converter={StaticResource typeConverter}, ConverterParameter=4}">
+								package</RadioButton>
+						</StackPanel>
+					</Border>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="Атрибуты">
+				<StackPanel>
+					<Button Command="{Binding buttonAddAttribute}">
+						<Image Width="24" Height="24" Source="/Assets/bird.png"></Image>
+					</Button>
+					<ListBox Items="{Binding Attributes}">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Grid ColumnDefinitions="auto,1.5*,*,*,auto" RowDefinitions="auto,auto">
+									
+									<TextBox Grid.Column="1" Watermark="Название" Text="{Binding Name}"/>
+									<TextBox Grid.Column="2" Watermark="Тип" Text="{Binding Type}"/>
+									<TextBox Grid.Column="3" Watermark="Default" Text="{Binding Default}"/>
+									<StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal">
+										<ComboBox SelectedIndex="{Binding Access}">
+											<ComboBoxItem>private</ComboBoxItem>
+											<ComboBoxItem>public</ComboBoxItem>
+											<ComboBoxItem>protected</ComboBoxItem>
+											<ComboBoxItem>package</ComboBoxItem>
+										</ComboBox>
+										<CheckBox IsChecked="{Binding IsReadonly}">readonly</CheckBox>
+										<Border Width="10"/>
+										<CheckBox IsChecked="{Binding IsStatic}">static</CheckBox>
+										<Border Width="10"/>
+										<ComboBox SelectedIndex="{Binding Stereo}">
+											<ComboBoxItem>-</ComboBoxItem>
+											<ComboBoxItem>"event"</ComboBoxItem>
+											<ComboBoxItem>"property"</ComboBoxItem>
+											<ComboBoxItem>"required"</ComboBoxItem>
+										</ComboBox>
+									</StackPanel>
+									<Button Grid.Column="4" Grid.RowSpan="2" 
+											Command="{Binding $parent[ListBox].DataContext.buttonRemoveAttribute}" 
+											CommandParameter="{Binding}">
+										<Image Width="24" Height="24" Source="/Assets/button-delete.png"></Image>
+									</Button>
+								</Grid>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</StackPanel>
+			</TabItem>
+
+			<TabItem Header="Операции">
+				<StackPanel>
+					<Button Command="{Binding buttonAddMethod}">
+						<Image Width="24" Height="24" Source="/Assets/bird.png"></Image>
+					</Button>
+					<ListBox Items="{Binding Methods}">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Grid ColumnDefinitions="auto,1.5*,*,auto" RowDefinitions="auto,auto,auto">
+									
+									<TextBox Grid.Column="1" Watermark="Название" Text="{Binding Name}"/>
+									<TextBox Grid.Column="2" Watermark="Тип" Text="{Binding Type}"/>
+									<StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal">
+										<ComboBox SelectedIndex="{Binding Access}">
+											<ComboBoxItem>private</ComboBoxItem>
+											<ComboBoxItem>public</ComboBoxItem>
+											<ComboBoxItem>protected</ComboBoxItem>
+											<ComboBoxItem>package</ComboBoxItem>
+										</ComboBox>
+										<ComboBox SelectedIndex="{Binding Stereo}">
+											<ComboBoxItem>virtual</ComboBoxItem>
+											<ComboBoxItem>static</ComboBoxItem>
+											<ComboBoxItem>abstract</ComboBoxItem>
+											<ComboBoxItem>create</ComboBoxItem>
+										</ComboBox>
+									</StackPanel>
+									<StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal">
+										<Button Command="{Binding buttonAddProperty}" VerticalAlignment="Top">
+											<Image Width="16" Height="16" Source="/Assets/bird.png"></Image>
+										</Button>
+										<ListBox Items="{Binding Properties}">
+											<ListBox.ItemTemplate>
+												<DataTemplate>
+													<Grid ColumnDefinitions="auto,1.5*,*,*,auto" Classes="props" Margin="0 -4 0 0">
+														<TextBox Grid.Column="1" Watermark="Название" Text="{Binding Name}"/>
+														<TextBox Grid.Column="2" Watermark="Тип" Text="{Binding Type}"/>
+														<TextBox Grid.Column="3" Watermark="Default" Text="{Binding Default}"/>
+														<Button Grid.Column="4" VerticalAlignment="Top" 
+																Command="{Binding $parent[ListBox].DataContext.buttonRemoveProperty}"
+																CommandParameter="{Binding}">
+															<Image Width="16" Height="16" Source="/Assets/button-delete.png"></Image>
+														</Button>
+													</Grid>
+												</DataTemplate>
+											</ListBox.ItemTemplate>
+										</ListBox>
+									</StackPanel>
+									<Button Grid.Column="3" Grid.RowSpan="2" 
+											Command="{Binding $parent[ListBox].DataContext.buttonRemoveMethod}"
+											CommandParameter="{Binding}">
+										<Image Width="24" Height="24" Source="/Assets/button-delete.png"></Image>
+									</Button>
+								</Grid>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</StackPanel>
+			</TabItem>
+		</TabControl>
+
+		<StackPanel Grid.Row="1" Orientation="Horizontal">
+			<Button Command="{Binding Apply}">Добавить</Button>
+			<Button Command="{Binding Close}">Закрыть</Button>
+			<Button Command="{Binding Clear}">Сбросить</Button>
+		</StackPanel>
+
+	</Grid>
+
+</Window>
