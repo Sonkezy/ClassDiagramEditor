@@ -16,6 +16,10 @@ using Avalonia.Media;
 using System.Drawing.Printing;
 using Avalonia.VisualTree;
 using DynamicData.Kernel;
+using Avalonia.Input;
+using Avalonia.Media.Imaging;
+using System.Collections.ObjectModel;
+using GraphicEditor.Models.Serializers;
 
 namespace ClassDiagramEditor.Models
 {
@@ -33,6 +37,8 @@ namespace ClassDiagramEditor.Models
         Ellipse point = new Ellipse() { Tag= "point", Width = 10, Height = 10, Fill = Brush.Parse("AliceBlue"), Stroke = Brush.Parse("Blue"), StrokeThickness = 1, Margin = new(0,0,0,0), ZIndex = 2 ,IsVisible = false};
         ArrowConstructor arrow = new ArrowConstructor();
         List<ArrowConstructor> arrows = new List<ArrowConstructor>();
+        List<Element> items= new();
+        bool is_border = false;
         public Mapper(MainWindowViewModel model)
         {
             main_model = model;
@@ -46,6 +52,7 @@ namespace ClassDiagramEditor.Models
         }
         public void AddItem(Element item, Point position)
         {
+            items.Add(item);
             var control = new DiagramItem(item);
             DiagramItemViewModel model = new DiagramItemViewModel();
             if (control.DataContext is not null) model = (DiagramItemViewModel)control.DataContext;
@@ -54,6 +61,10 @@ namespace ClassDiagramEditor.Models
             canvas.Children.Add(control);
             models.Add(model);
         }
+        public void AddItem(Element item)
+        {
+            AddItem(item, new Point(item.PositionX, item.PositionY));
+        }
         public void Update(DiagramItemViewModel model,Element item)
         {
             selected_index = models.IndexOf(model);
@@ -61,9 +72,21 @@ namespace ClassDiagramEditor.Models
         }
         private void RemoveItem(DiagramItemViewModel item)
         {
-            models.Remove(item);
             if (item.Source.Parent is null) return;
             var canvas = (Canvas)(item.Source.Parent);
+            for (int i=0;i<arrows.Count;i++)
+            {
+                if (arrows[i].StartPoint.X > item.Position.X - 10&& arrows[i].StartPoint.X < item.Position.X + item.Height + 10 &&
+                    arrows[i].StartPoint.Y > item.Position.Y - 10&& arrows[i].StartPoint.Y < item.Position.Y + item.Width + 10 ||
+                    arrows[i].EndPoint.X > item.Position.X - 10 && arrows[i].EndPoint.X < item.Position.X + item.Height + 10 &&
+                    arrows[i].EndPoint.Y > item.Position.Y - 10 && arrows[i].EndPoint.Y < item.Position.Y + item.Width + 10)
+                {
+
+                    canvas.Children.Remove(arrows[i].Arrow);
+                    arrows.Remove(arrows[i]);
+                }
+            }
+            models.Remove(item);
             canvas.Children.Remove(item.Source);
         }
         public bool ItemChecker(Control item)
@@ -116,7 +139,7 @@ namespace ClassDiagramEditor.Models
                 "arrow" => 6,
                 _ => 0,
             };
-            if (_mode != 0) return true;
+            if (_mode == check) return true;
 
             while (item.Parent != null)
             {
@@ -180,7 +203,7 @@ namespace ClassDiagramEditor.Models
             {
                 var parent = point.GetVisualParent<Canvas>();
                 parent.Children.Remove(point);
-                System.Diagnostics.Debug.WriteLine("Border \n", position.ToString());
+                //System.Diagnostics.Debug.WriteLine("Border \n", position.ToString());
                 point.IsVisible= true;
                 point.Margin = new(position.X-5, position.Y-5,0,0);
                 parent.Children.Add(point);
@@ -193,7 +216,7 @@ namespace ClassDiagramEditor.Models
             {
                 var parent = arrow.Arrow.GetVisualParent<Canvas>();
                 parent.Children.Remove(arrow.Arrow);
-                System.Diagnostics.Debug.WriteLine("Arrow \n", position.ToString());
+                //System.Diagnostics.Debug.WriteLine("Arrow \n", position.ToString());
                 arrow.Arrow.IsVisible = true;
                 arrow.EndPoint = position - new Point(3,3);
                 arrow.Update();
@@ -203,6 +226,26 @@ namespace ClassDiagramEditor.Models
             {
                 arrow.Arrow.IsVisible = false;
             }
+            Control current_item = (Control)main_model.MainWindow.InputHitTest(position);
+            if(current_item != null && is_pressed)
+            {
+                System.Diagnostics.Debug.WriteLine("item \n", (string?)current_item.Tag);
+                if (ItemChecker(current_item, 4))
+                {
+                    var parent = point.GetVisualParent<Canvas>();
+                    parent.Children.Remove(point);
+                    is_border = true;
+                    point.IsVisible = true;
+                    point.Margin = new(position.X - 5, position.Y - 5, 0, 0);
+                    parent.Children.Add(point);
+                }
+                else
+                {
+                    is_border = false;
+                    point.IsVisible = false;
+                }
+            }
+            
         }
         public void Release(Control item, Point position)
         {
@@ -227,7 +270,7 @@ namespace ClassDiagramEditor.Models
                 RemoveItem(models[selected_index]);
                 System.Diagnostics.Debug.WriteLine("Delete \n", position.ToString());
             }
-            if(mode == 5 && ItemChecker(item, 5) && move_selected_index != selected_index)
+            if(mode == 5 && is_border)
             {
                 ArrowConstructor new_arrow = new ArrowConstructor();
                 new_arrow.StartPoint = arrow.StartPoint;
@@ -244,8 +287,160 @@ namespace ClassDiagramEditor.Models
             mode = 0;
 
         }
-
-
+        public async void SavePNG()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Save png file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("png");
+            filter.Extensions = extension;
+            filter.Name = "Image Files";
+            filters.Add(filter);
+            saveFileDialog.Filters = filters;
+            saveFileDialog.DefaultExtension = "png";
+            string? result = await saveFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                Canvas canvas = main_model.MainWindow.Find<Canvas>("canvas");
+                var pixelSize = new PixelSize((int)canvas.Bounds.Width, (int)canvas.Bounds.Height);
+                var size = new Size(canvas.Bounds.Width, canvas.Bounds.Height);
+                using (RenderTargetBitmap bitmap = new RenderTargetBitmap(pixelSize, new Vector(96, 96)))
+                {
+                    canvas.Measure(size);
+                    canvas.Arrange(new Rect(size));
+                    bitmap.Render(canvas);
+                    bitmap.Save(result);
+                }
+            }
+        }
+        public async void SaveXML()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Save xml file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("xml");
+            filter.Extensions = extension;
+            filter.Name = "Xml Files";
+            filters.Add(filter);
+            saveFileDialog.Filters = filters;
+            saveFileDialog.DefaultExtension = "xml";
+            string? result = await saveFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                XMLSerializer<List<Element>>.Save(result, items);
+            }
+        }
+        public async void LoadXML()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Open xml file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("xml");
+            filter.Extensions = extension;
+            filter.Name = "Xml Files";
+            filters.Add(filter);
+            openFileDialog.Filters = filters;
+            openFileDialog.AllowMultiple = false;
+            string[]? result = await openFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                var items = XMLSerializer<List<Element>>.Load(result[0]);
+                for(int i=0;i<items.Count; i++)
+                {
+                    AddItem(items[i]);
+                }
+            }
+        }
+        public async void SaveJSON()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Save json file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("json");
+            filter.Extensions = extension;
+            filter.Name = "Json Files";
+            filters.Add(filter);
+            saveFileDialog.Filters = filters;
+            saveFileDialog.DefaultExtension = "json";
+            string? result = await saveFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                JSONSerializer<List<Element>>.Save(result, items);
+            }
+        }
+        public async void LoadJSON()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Open json file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("json");
+            filter.Extensions = extension;
+            filter.Name = "Json Files";
+            filters.Add(filter);
+            openFileDialog.Filters = filters;
+            openFileDialog.AllowMultiple = false;
+            string[]? result = await openFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                var items = JSONSerializer<List<Element>>.Load(result[0]);
+                for (int i = 0; i < items.Count; i++)
+                {
+                    AddItem(items[i]);
+                }
+            }
+        }
+        public async void SaveYAML()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Save yaml file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("yaml");
+            filter.Extensions = extension;
+            filter.Name = "Yaml Files";
+            filters.Add(filter);
+            saveFileDialog.Filters = filters;
+            saveFileDialog.DefaultExtension = "yaml";
+            string? result = await saveFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                YAMLSerializer<List<Element>>.Save(result, items);
+            }
+        }
+        public async void LoadYAML()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Open yaml file";
+            List<FileDialogFilter> filters = new List<FileDialogFilter>();
+            FileDialogFilter filter = new FileDialogFilter();
+            List<string> extension = new List<string>();
+            extension.Add("yaml");
+            filter.Extensions = extension;
+            filter.Name = "Yaml Files";
+            filters.Add(filter);
+            openFileDialog.Filters = filters;
+            openFileDialog.AllowMultiple = false;
+            string[]? result = await openFileDialog.ShowAsync(main_model.MainWindow);
+            if (result != null)
+            {
+                var items = YAMLSerializer<List<Element>>.Load(result[0]);
+                for (int i = 0; i < items.Count; i++)
+                {
+                    AddItem(items[i]);
+                }
+            }
+        }
     }
 
 }

@@ -87,6 +87,8 @@ namespace ClassDiagramEditor.ViewModels
             item.Stereo = Stereo;
             item.Attributes = new List<Attribute>(Attributes.ToArray());
             item.Methods = new List<Method>(Methods.ToArray());
+            item.PositionX = (int)position.X;
+            item.PositionY = (int)position.Y;
             map.AddItem(item, position);
             window.Close();
         }

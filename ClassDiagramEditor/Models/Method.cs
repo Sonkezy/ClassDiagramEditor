@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace ClassDiagramEditor.Models
 {
+    [Serializable]
     public class Method : AbstractNotifyPropertyChanged
     {
         

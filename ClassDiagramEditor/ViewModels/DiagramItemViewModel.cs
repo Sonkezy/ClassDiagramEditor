@@ -136,6 +136,8 @@ namespace ClassDiagramEditor.ViewModels
         {
             Source.Margin = new(position.X,position.Y,0,0);
             this.position = position;
+            item.PositionX = (int)position.X;
+            item.PositionY = (int)position.Y;
         }
         public Point Position
         {

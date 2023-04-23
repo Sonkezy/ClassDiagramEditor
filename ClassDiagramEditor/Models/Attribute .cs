@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ClassDiagramEditor.Models
 {
+    [Serializable]
     public class Attribute : AbstractNotifyPropertyChanged
     {
         string name = "name";

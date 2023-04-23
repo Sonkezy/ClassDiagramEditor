@@ -1,4 +1,5 @@
-﻿using DynamicData.Binding;
+﻿using Avalonia;
+using DynamicData.Binding;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,22 +9,26 @@ using System.Threading.Tasks;
 
 namespace ClassDiagramEditor.Models
 {
+    [Serializable]
     public class Element : AbstractNotifyPropertyChanged
     {
         string name = "name";
         int access = 0;
         int stereo = 0;
+        int positionX = 0;
+        int positionY = 0;
         static readonly string[] stereos = new string[] { "", "static", "abstract", "interface" };
         List<Attribute> attributes= new List<Attribute>();
         List<Method> methods = new List<Method>();
-
 
         public string Name { get => name; set => SetAndRaise(ref name, value); }
         public int Access { get => access; set => SetAndRaise(ref access, value); }
         public int Stereo { get => stereo; set => SetAndRaise(ref stereo, value); }
         public List<Attribute> Attributes { get => attributes; set => SetAndRaise(ref attributes, value); }
         public List<Method> Methods { get => methods; set => SetAndRaise(ref methods, value); }
-        
+        public int PositionX { get => positionX; set => SetAndRaise(ref positionX, value); }
+        public int PositionY { get => positionY; set => SetAndRaise(ref positionY, value); }
+
         public Element() { }
         public string GetName()
         {
